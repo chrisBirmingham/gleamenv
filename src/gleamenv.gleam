@@ -3,7 +3,6 @@ import envoy
 import gleam/dict
 import gleam/list
 import gleam/io
-import gleam/result
 import gleam/string
 
 const version = "1.0.0"
@@ -15,15 +14,9 @@ If no VARIABLE is specified, print name and value pairs for them all.
       --help     Display this help and exit
       --version  Output version information and exit"
 
-fn get_env(env: String) -> String {
-  envoy.get(env)
-    |> result.unwrap("")
-}
-
 fn get_specific(envs: List(String)) -> List(String) {
   envs
-    |> list.map(get_env)
-    |> list.filter(fn(n) { !string.is_empty(n) })
+    |> list.filter_map(envoy.get)
 }
 
 fn format_pair(pair: #(String, String)) -> String {

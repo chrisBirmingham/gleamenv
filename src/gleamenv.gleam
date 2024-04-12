@@ -3,7 +3,6 @@ import envoy
 import gleam/dict
 import gleam/list
 import gleam/io
-import gleam/string
 
 const version = "1.0.0"
 const usage = "Usage: gleamenv [OPTION]... [VARIABLE]...
@@ -14,34 +13,37 @@ If no VARIABLE is specified, print name and value pairs for them all.
       --help     Display this help and exit
       --version  Output version information and exit"
 
-fn get_specific(envs: List(String)) -> List(String) {
+fn print_list(envs: List(String), print_null: Bool) -> Nil {
+  let print = case print_null {
+    True -> io.print
+    False -> io.println
+  }
+
+  envs |> list.each(print)
+}
+
+fn get_specific(envs: List(String), print_null: Bool) -> Nil {
   envs
     |> list.filter_map(envoy.get)
+    |> print_list(print_null)
 }
 
 fn format_pair(pair: #(String, String)) -> String {
   pair.0 <> "=" <> pair.1
 }
 
-fn get_all() -> List(String) {
+fn get_all(print_null: Bool) -> Nil {
   envoy.all() 
     |> dict.to_list() 
     |> list.map(format_pair)
+    |> print_list(print_null)
 }
 
 fn print_env(args: List(String), print_null: Bool) -> Nil {
-  let res = case args {
-    [] -> get_all()
-    _ -> get_specific(args)
+  case args {
+    [] -> get_all(print_null)
+    _ -> get_specific(args, print_null)
   }
-
-  let newline = case print_null {
-    True -> ""
-    False -> "\n"
-  }
-
-  let res = string.join(res, newline) <> newline
-  io.print(res)
 }
 
 pub fn main() {

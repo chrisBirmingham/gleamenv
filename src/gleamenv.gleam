@@ -3,7 +3,10 @@ import envoy
 import gleam/dict
 import gleam/list
 import gleam/io
+import shellout
 
+const exit_success = 0
+const exit_failure = 1
 const version = "1.0.0"
 const usage = "Usage: gleamenv [OPTION]... [VARIABLE]...
 Print the values of the specified environment VARIABLE(s).
@@ -23,9 +26,17 @@ fn print_list(envs: List(String), print_null: Bool) -> Nil {
 }
 
 fn get_specific(envs: List(String), print_null: Bool) -> Nil {
-  envs
+  let vars = envs
     |> list.filter_map(envoy.get)
-    |> print_list(print_null)
+
+  vars |> print_list(print_null)
+
+  let exit_code = case list.length(vars) == list.length(envs) {
+    True -> exit_success
+    False -> exit_failure
+  }
+
+  shellout.exit(exit_code)
 }
 
 fn format_pair(pair: #(String, String)) -> String {

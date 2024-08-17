@@ -16,44 +16,34 @@ If no VARIABLE is specified, print name and value pairs for them all.
       --help     Display this help and exit
       --version  Output version information and exit"
 
-fn print_list(envs: List(String), print_null: Bool) -> Nil {
-  let print = case print_null {
-    True -> io.print
-    False -> io.println
-  }
-
-  envs |> list.each(print)
-}
-
-fn get_specific(envs: List(String), print_null: Bool) -> Nil {
-  let vars = envs
-    |> list.filter_map(envoy.get)
-
-  vars |> print_list(print_null)
+fn get_specific(envs: List(String), print: fn(String) -> Nil) -> Nil {
+  let vars = envs |> list.filter_map(envoy.get)
 
   let exit_code = case list.length(vars) == list.length(envs) {
     True -> exit_success
     False -> exit_failure
   }
 
+  vars |> list.each(print)
   shellout.exit(exit_code)
 }
 
-fn format_pair(pair: #(String, String)) -> String {
-  pair.0 <> "=" <> pair.1
-}
-
-fn get_all(print_null: Bool) -> Nil {
-  envoy.all() 
-    |> dict.to_list() 
-    |> list.map(format_pair)
-    |> print_list(print_null)
+fn get_all(print: fn(String) -> Nil) -> Nil {
+  envoy.all() |> dict.each(fn(key, value) {
+    let item = key <> "=" <> value
+    item |> print
+  })
 }
 
 fn print_env(args: List(String), print_null: Bool) -> Nil {
+  let print = case print_null {
+    True -> io.print
+    False -> io.println
+  }
+
   case args {
-    [] -> get_all(print_null)
-    _ -> get_specific(args, print_null)
+    [] -> get_all(print)
+    _ -> get_specific(args, print)
   }
 }
 
